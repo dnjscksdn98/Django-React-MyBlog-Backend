@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED
@@ -8,9 +8,8 @@ from rest_framework.status import (
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 
-from django.contrib.auth.models import User
-from posts.models import Post, Comment
-from .serializers import PostSerializer
+from posts.models import Post, Comment, Author, Category
+from .serializers import PostSerializer, CategorySerializer
 
 
 class PostsView(ListAPIView):
@@ -55,4 +54,40 @@ class CommentView(APIView):
             return Response({'message': 'Successfully submitted a comment.'}, status=HTTP_201_CREATED)
 
         else:
-            return Response({'message': 'Please login first.'}, status=HTTP_401_UNAUTHORIZED)
+            return Response({'message': 'You must login first.'}, status=HTTP_401_UNAUTHORIZED)
+
+
+class PostCreateView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        form = request.data.get('formData', None)
+        if form is None:
+            return Response({'message': 'Invalid data received.'}, status=HTTP_404_NOT_FOUND)
+
+        if request.user.is_authenticated:
+            current_author, created = Author.objects.get_or_create(
+                user=request.user)
+
+            created_post = Post(
+                title=form['title'],
+                overview=form['overview'],
+                author=current_author,
+                thumbnail=form['thumbnail'],
+                content=form['content']
+            )
+            created_post.save()
+            created_post.category.add(form['category'])
+            created_post.save()
+            return Response({'message': 'Successfully created a new post.', 'id': created_post.id}, status=HTTP_201_CREATED)
+
+        else:
+            return Response({'message': 'You must login first.'}, status=HTTP_401_UNAUTHORIZED)
+
+
+class CategoryView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
