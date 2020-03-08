@@ -79,7 +79,9 @@ class PostCreateView(CreateAPIView):
                 content=form['content']
             )
             created_post.save()
-            created_post.category.add(form['category'])
+
+            selected_category = Category.objects.get(title=form['category'])
+            created_post.category.add(selected_category)
             created_post.save()
             return Response({'message': 'Successfully created a new post.', 'id': created_post.id}, status=HTTP_201_CREATED)
 
