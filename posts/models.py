@@ -65,8 +65,8 @@ class Post(models.Model):
     overview = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey('Author', on_delete=models.CASCADE)
-    thumbnail = models.ImageField()
-    category = models.ManyToManyField('Category', blank=True, null=True)
+    thumbnail = models.ImageField(blank=True, null=True)
+    category = models.ManyToManyField('Category')
     featured = models.BooleanField(default=False)
     content = RichTextField()
     previous_post = models.ForeignKey(
