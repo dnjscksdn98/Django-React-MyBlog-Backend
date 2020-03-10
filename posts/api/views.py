@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 
 from posts.models import Post, PostView, Comment, Author, Category
-from .serializers import PostSerializer, CategorySerializer
+from .serializers import PostSerializer, CategorySerializer, PostViewSerializer
 
 
 class PostsView(ListAPIView):
@@ -33,10 +33,6 @@ class PostDetailView(RetrieveAPIView):
 
         except ObjectDoesNotExist:
             raise Http404('This post does not exist.')
-
-    # def get_queryset(self):
-    #     post = self.get_object()
-    #     return Post.objects.filter(id=post.id)
 
 
 class CommentView(APIView):
@@ -165,3 +161,14 @@ class PostUpdateView(UpdateAPIView):
 class PostDeleteView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Post.objects.all()
+
+
+class ReadingListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostViewSerializer
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return PostView.objects.filter(user=self.request.user)
+
+        return PostView.objects.none()

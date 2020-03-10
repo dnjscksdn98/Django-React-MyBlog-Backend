@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
-from posts.models import Post, Author, Category, Comment
+from posts.models import Post, Author, Category, Comment, UserProfile, PostView
 
 User = get_user_model()
 
@@ -91,12 +91,42 @@ class CommentSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'timestamp',
-            'content',
-            # 'post'
+            'content'
         ]
 
     def get_user(self, obj):
         return UserSerializer(obj.user).data
 
-    # def get_post(self, obj):
-    #     return PostSerializer(obj.post).data
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    reading_list = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'id',
+            'user',
+            'reading_list',
+            'my_posts'
+        ]
+
+    def get_user(self, obj):
+        return UserSerializer(obj.user).data
+
+    def get_reading_list(self, obj):
+        return PostViewSerializer(obj.reading_list.all(), many=True).data
+
+
+class PostViewSerializer(serializers.ModelSerializer):
+    post = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PostView
+        fields = [
+            'id',
+            'post'
+        ]
+
+    def get_post(self, obj):
+        return PostSerializer(obj.post).data
