@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from rest_framework.generics import UpdateAPIView, CreateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (
@@ -145,3 +145,8 @@ class PostUpdateView(UpdateAPIView):
 
         else:
             return Response({'message': 'You must login first.'}, status=HTTP_401_UNAUTHORIZED)
+
+
+class PostDeleteView(DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = Post.objects.all()
