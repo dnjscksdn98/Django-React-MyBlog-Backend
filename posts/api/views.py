@@ -134,20 +134,12 @@ class PostUpdateView(UpdateAPIView):
             updated_post.content = form['content']
             updated_post.save()
 
-            # Todo : update categories
-
+            # update categories
+            selected_categories_list = []
             for category in selected_categories:
-                selected_category = Category.objects.get(title=category)
-                if not selected_category.post_set.filter(category=selected_category).exists():
-                    updated_post.add(selected_category)
-
-            selected_category = Category.objects.get(title=form['category'])
-            category_is_updated = Post.objects.filter(
-                id=updated_post_id, category__id=selected_category.id)
-
-            if not category_is_updated.exists():
-                updated_post.category.add(selected_category)
-                updated_post.save()
+                selected_categories_list.append(
+                    Category.objects.get(title=category))
+            updated_post.category.set(selected_categories_list)
 
             return Response({'message': 'Successfully updated your new post.', 'id': updated_post.id}, status=HTTP_201_CREATED)
 
