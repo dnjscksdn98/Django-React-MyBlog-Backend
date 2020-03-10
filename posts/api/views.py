@@ -8,7 +8,7 @@ from rest_framework.status import (
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 
-from posts.models import Post, Comment, Author, Category
+from posts.models import Post, PostView, Comment, Author, Category
 from .serializers import PostSerializer, CategorySerializer
 
 
@@ -18,10 +18,25 @@ class PostsView(ListAPIView):
     queryset = Post.objects.all()
 
 
-class PostView(RetrieveAPIView):
+class PostDetailView(RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    # queryset = Post.objects.all()
+
+    def get_object(self):
+        try:
+            post = Post.objects.get(id=self.kwargs.get('pk'))
+            if self.request.user.is_authenticated:
+                PostView.objects.get_or_create(
+                    user=self.request.user, post=post)
+            return post
+
+        except ObjectDoesNotExist:
+            raise Http404('This post does not exist.')
+
+    # def get_queryset(self):
+    #     post = self.get_object()
+    #     return Post.objects.filter(id=post.id)
 
 
 class CommentView(APIView):
