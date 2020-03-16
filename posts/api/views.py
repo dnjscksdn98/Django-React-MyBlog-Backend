@@ -8,8 +8,8 @@ from rest_framework.status import (
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, JsonResponse
 
-from posts.models import Post, PostView, Comment, Author, Category
-from .serializers import PostSerializer, CategorySerializer, PostViewSerializer
+from posts.models import Post, PostView, Comment, Author, Category, UserProfile
+from .serializers import PostSerializer, CategorySerializer, PostViewSerializer, UserProfileSerializer
 
 from functools import wraps
 import jwt
@@ -44,6 +44,19 @@ def requires_scope(required_scope):
             return response
         return decorated
     return require_scope
+
+
+class UserIdView(APIView):
+    def get(self, request, *args, **kwargs):
+        return Response({'user_id': request.user.id}, status=HTTP_200_OK)
+
+
+class UserProfileView(RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        return UserProfile.objects.filter(user=self.request.user)
 
 
 class PostsView(ListAPIView):
@@ -145,12 +158,12 @@ class CategoryView(ListAPIView):
     queryset = Category.objects.all()
 
 
-class MyPostsView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = PostSerializer
+# class MyPostsView(ListAPIView):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = PostSerializer
 
-    def get_queryset(self):
-        return Post.objects.filter(author__user=self.request.user)
+#     def get_queryset(self):
+#         return Post.objects.filter(author__user=self.request.user)
 
 
 class PostUpdateView(UpdateAPIView):
@@ -196,12 +209,12 @@ class PostDeleteView(DestroyAPIView):
     queryset = Post.objects.all()
 
 
-class ReadingListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = PostViewSerializer
+# class ReadingListView(ListAPIView):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = PostViewSerializer
 
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return PostView.objects.filter(user=self.request.user)
+#     def get_queryset(self):
+#         if self.request.user.is_authenticated:
+#             return PostView.objects.filter(user=self.request.user)
 
-        return PostView.objects.none()
+#         return PostView.objects.none()

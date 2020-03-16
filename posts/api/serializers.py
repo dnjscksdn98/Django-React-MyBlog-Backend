@@ -101,6 +101,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     reading_list = serializers.SerializerMethodField()
+    my_posts = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -116,6 +117,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_reading_list(self, obj):
         return PostViewSerializer(obj.reading_list.all(), many=True).data
+
+    def get_my_posts(self, obj):
+        return PostSerializer(obj.my_posts.all(), many=True).data
 
 
 class PostViewSerializer(serializers.ModelSerializer):

@@ -15,11 +15,11 @@ class UserProfile(models.Model):
 
     @property
     def reading_list(self):
-        return PostView.objects.filter(user=self.user).first()
+        return PostView.objects.filter(user=self.user)
 
     @property
     def my_posts(self):
-        return Post.objects.filter(author__user=self.user).first()
+        return Post.objects.filter(author__user=self.user)
 
 
 class Author(models.Model):
@@ -45,6 +45,8 @@ class Comment(models.Model):
     content = models.TextField()
     post = models.ForeignKey(
         'Post', related_name='comments', on_delete=models.CASCADE)
+
+    # reply
 
     def __str__(self):
         return self.user.username
@@ -73,6 +75,8 @@ class Post(models.Model):
         'self', related_name='previous', on_delete=models.SET_NULL, blank=True, null=True)
     next_post = models.ForeignKey(
         'self', related_name='next', on_delete=models.SET_NULL, blank=True, null=True)
+
+    # likes
 
     def __str__(self):
         return self.title

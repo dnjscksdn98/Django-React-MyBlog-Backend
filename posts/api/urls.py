@@ -2,18 +2,19 @@ from django.urls import path
 
 from .views import (
     PostsView, PostDetailView, CommentView, PostCreateView, CategoryView,
-    MyPostsView, PostUpdateView, PostDeleteView, ReadingListView
+    PostUpdateView, PostDeleteView, UserIdView, UserProfileView
 )
 
 urlpatterns = [
     path('posts/', PostsView.as_view(), name='posts'),
+    path('posts/', PostCreateView.as_view(), name='post-create'),
     path('posts/<pk>/', PostDetailView.as_view(), name='post-detail'),
-    path('add-comment/', CommentView.as_view(), name='add-comment'),
-    path('post-create/', PostCreateView.as_view(), name='post-create'),
-    path('retrieve-categories/', CategoryView.as_view(),
-         name='retrieve-categories'),
-    path('my-posts/', MyPostsView.as_view(), name='my-posts'),
-    path('my-reading-list/', ReadingListView.as_view(), name='my-reading-list'),
-    path('post/<pk>/update/', PostUpdateView.as_view(), name='post-update'),
-    path('post/<pk>/delete/', PostDeleteView.as_view(), name='post-delete')
+    path('posts/<pk>/', PostUpdateView.as_view(), name='post-update'),
+    path('posts/<pk>/', PostDeleteView.as_view(), name='post-delete'),
+    path('posts/<pk>/comments/', CommentView.as_view(), name='create-comment'),
+
+    path('categories/', CategoryView.as_view(), name='get-categories'),
+
+    path('users/id/', UserIdView.as_view(), name='get-user-id'),
+    path('users/<pk>/profile/', UserProfileView.as_view(), name='user-profile'),
 ]
