@@ -28,6 +28,7 @@ class PostSerializer(serializers.ModelSerializer):
             'previous_post',
             'next_post',
             'comments',
+            'likes',
             'view_count',
             'comment_count'
         ]

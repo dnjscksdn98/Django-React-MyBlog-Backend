@@ -31,6 +31,14 @@ class Author(models.Model):
         return self.user.username
 
 
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.username
+
+
 class PostView(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
@@ -76,14 +84,16 @@ class Post(models.Model):
     next_post = models.ForeignKey(
         'self', related_name='next', on_delete=models.SET_NULL, blank=True, null=True)
 
-    # likes
-
     def __str__(self):
         return self.title
 
     @property
     def comments(self):
         return self.comments.all().order_by('-timestamp')
+
+    @property
+    def likes(self):
+        return Like.objects.filter(post=self).count()
 
     @property
     def view_count(self):

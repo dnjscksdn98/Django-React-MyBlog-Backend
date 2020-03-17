@@ -1,6 +1,8 @@
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.generics import (
+    ListAPIView, RetrieveAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+)
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED
@@ -8,8 +10,10 @@ from rest_framework.status import (
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, JsonResponse
 
-from posts.models import Post, PostView, Comment, Author, Category, UserProfile
-from .serializers import PostSerializer, CategorySerializer, PostViewSerializer, UserProfileSerializer
+from posts.models import Post, PostView, Comment, Author, Category, UserProfile, Like
+from .serializers import (
+    PostSerializer, CategorySerializer, PostViewSerializer, UserProfileSerializer
+)
 
 from functools import wraps
 import jwt
@@ -59,26 +63,30 @@ class UserProfileView(RetrieveAPIView):
         return UserProfile.objects.filter(user=self.request.user)
 
 
-class PostsView(ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = PostSerializer
-    queryset = Post.objects.all()
+class CategoryView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
 
 
-class PostDetailView(RetrieveAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = PostSerializer
+class LikeView(APIView):
+    def post(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            current_post_id = request.data.get('blogId', None)
+            if current_post_id is None:
+                return Response({'message': 'This blog does not exist.'}, status=HTTP_404_NOT_FOUND)
 
-    def get_object(self):
-        try:
-            post = Post.objects.get(id=self.kwargs.get('pk'))
-            if self.request.user.is_authenticated:
-                PostView.objects.get_or_create(
-                    user=self.request.user, post=post)
-            return post
+            try:
+                current_post = Post.objects.get(id=current_post_id)
+            except ObjectDoesNotExist:
+                raise Http404('This blog does not exist.')
 
-        except ObjectDoesNotExist:
-            raise Http404('This post does not exist.')
+            like = Like.objects.filter(user=request.user, post=current_post)
+            if like.exists():
+                like.delete()
+            else:
+                Like.objects.create(user=request.user, post=current_post)
+            return Response({'message': 'Successfully submitted a like.'}, status=HTTP_201_CREATED)
 
 
 class CommentView(APIView):
@@ -114,8 +122,10 @@ class CommentView(APIView):
             return Response({'message': 'You must login first.'}, status=HTTP_401_UNAUTHORIZED)
 
 
-class PostCreateView(CreateAPIView):
-    permission_classes = [IsAuthenticated]
+class PostsView(ListCreateAPIView):
+    # get posts, create post
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = PostSerializer
     queryset = Post.objects.all()
 
@@ -152,24 +162,22 @@ class PostCreateView(CreateAPIView):
             return Response({'message': 'You must login first.'}, status=HTTP_401_UNAUTHORIZED)
 
 
-class CategoryView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = CategorySerializer
-    queryset = Category.objects.all()
+class PostDetailView(RetrieveUpdateDestroyAPIView):
+    # get post detail, update post, delete post
 
-
-# class MyPostsView(ListAPIView):
-#     permission_classes = [IsAuthenticated]
-#     serializer_class = PostSerializer
-
-#     def get_queryset(self):
-#         return Post.objects.filter(author__user=self.request.user)
-
-
-class PostUpdateView(UpdateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+
+    def get_object(self):
+        try:
+            post = Post.objects.get(id=self.kwargs.get('pk'))
+            if self.request.user.is_authenticated:
+                PostView.objects.get_or_create(
+                    user=self.request.user, post=post)
+            return post
+
+        except ObjectDoesNotExist:
+            raise Http404('This post does not exist.')
 
     def put(self, request, *args, **kwargs):
         form = request.data.get('formData', None)
@@ -202,19 +210,3 @@ class PostUpdateView(UpdateAPIView):
 
         else:
             return Response({'message': 'You must login first.'}, status=HTTP_401_UNAUTHORIZED)
-
-
-class PostDeleteView(DestroyAPIView):
-    permission_classes = [IsAuthenticated]
-    queryset = Post.objects.all()
-
-
-# class ReadingListView(ListAPIView):
-#     permission_classes = [IsAuthenticated]
-#     serializer_class = PostViewSerializer
-
-#     def get_queryset(self):
-#         if self.request.user.is_authenticated:
-#             return PostView.objects.filter(user=self.request.user)
-
-#         return PostView.objects.none()
